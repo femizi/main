@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -9,7 +10,7 @@ import (
 
 	"github.com/gorilla/websocket"
 )
-
+var playerCount  []int
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -17,11 +18,23 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func createRandomness() string{
+type Message struct {
+	Name  string
+	Count int
+	keypressed string
+	score int
+}
+type ServerResponse struct {
+	Name string
+	Randomness string
+	Paddle1Position int
+	Paddle2Position int
+}
+
+func createRandomness() string {
 	rand.Seed(time.Now().UnixNano())
-	 randomnumber := rand.Float64()
-	
-	 
+	randomnumber := rand.Float64()
+
 	return fmt.Sprintf("%f", randomnumber)
 
 }
@@ -37,17 +50,31 @@ func reader(conn *websocket.Conn) {
 			log.Println(err)
 			return
 		}
-		if string(p)== "reset"{
-			conn.WriteMessage(messageType, []byte(createRandomness()))
+		// if string(p)== "reset"{
+		// 	conn.WriteMessage(messageType, []byte(createRandomness()))
+
+		// }
+		var message Message
+		json.Unmarshal([]byte(p), &message)
+		if message.Name == "connected" {
+			if len(playerCount ) != 2{
+				playerCount = append(playerCount, message.Count)
+				fmt.Println(playerCount)
+			}
 
 		}
+
 		log.Println(string(p))
 
 		if err := conn.WriteMessage(messageType, p); err != nil {
 			log.Println(err)
 
 		}
-		conn.WriteMessage(messageType, []byte(createRandomness()))
+		if len(playerCount) == 2 {
+			conn.WriteMessage(messageType, []byte("enough players"))
+			conn.WriteMessage(messageType, []byte(createRandomness()))
+			
+		}
 
 	}
 }
