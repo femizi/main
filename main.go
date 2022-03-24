@@ -23,7 +23,7 @@ type ServerResponse struct {
 	Paddle1Position int    `json:"paddle1position"`
 	Paddle2Position int    `json:"paddle2position"`
 }
-
+var client [] *websocket.Conn
 var playerCount []int
 var message Message
 var serverResponse ServerResponse
@@ -50,6 +50,8 @@ func reader(conn *websocket.Conn) {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
+			
+			
 			return
 		}
 		fmt.Println(messageType)
@@ -59,13 +61,19 @@ func reader(conn *websocket.Conn) {
 		case "connected":
 			if len(playerCount) != 2 {
 				playerCount = append(playerCount, message.Count)
-				fmt.Println(playerCount)
+				client = append(client, conn)
+			
 				if len(playerCount) == 2 {
 					serverResponse.Name = "enough players"
 					serverResponse.Randomness = createRandomness()
 					serverResponse.Paddle1Position = 300
 					serverResponse.Paddle2Position = 300
-					conn.WriteJSON(serverResponse)
+					for index, element:= range client{
+						fmt.Println(index)
+						element.WriteJSON(serverResponse)
+
+					} 
+					
 
 				}
 			}
@@ -74,13 +82,29 @@ func reader(conn *websocket.Conn) {
 			serverResponse.Randomness = createRandomness()
 			serverResponse.Paddle1Position = 150
 			serverResponse.Paddle2Position = 150
-			conn.WriteJSON(serverResponse)
+			for _, element:= range client{
+				
+				element.WriteJSON(serverResponse)
+
+			} 
 			
-		case "key pressed":
-		switch message.keypressed{
-		case "w":
-			
-		}
+		case "key pressed w":
+			serverResponse.Name = "update Paddle1 up"
+			serverResponse.Paddle1Position = 20
+			for _, element:= range client{
+				
+				element.WriteJSON(serverResponse)
+
+			} 
+		case "key pressed s":
+			serverResponse.Name = "update Paddle1 down"
+			serverResponse.Paddle1Position = 20
+			for _, element:= range client{
+				
+				element.WriteJSON(serverResponse)
+
+			} 
+		
 
 
 		}
