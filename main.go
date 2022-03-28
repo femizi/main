@@ -68,8 +68,8 @@ func reader(conn *websocket.Conn) {
 					serverResponse.Randomness = createRandomness()
 					serverResponse.Paddle1Position = 300
 					serverResponse.Paddle2Position = 300
-					for index, element:= range client{
-						fmt.Println(index)
+					for _, element:= range client{
+						
 						element.WriteJSON(serverResponse)
 
 					} 
